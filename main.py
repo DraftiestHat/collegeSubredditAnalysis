@@ -5,25 +5,43 @@ import string
 import shlex
 import json
 import time
-from datetime import date
-from pygraph.classes.graph import graph
+import os
 from pygraph.algorithms.searching import depth_first_search
+from datetime import date
 
-lim = 5
-exclude = set(string.punctuation)
+lim = 100
 subswords = dict()
+test = 0
+today = date.today()
+
+while True:
+	fileName = '' + str(today.year) + str(today.month) + str(today.day) 
+	testFileName = fileName + '_' + str(test) + '_' + 'subToWordDict.txt'
+	if( not os.path.isfile('./' + testFileName)):
+		fileName = testFileName
+		break
+	test = test + 1
+
+out = open(fileName,'w')
+
 
 #read in 500 most common words to set
-a = open('topwords.txt').read().lower().splitlines()
-common = set(a)
+a = open('topwords.txt')
+l = a.read().lower().splitlines()
+common = set(l)
+a.close()
 
 #read in dictionary to set
-b = open('dict.txt').read().lower().splitlines()
-dict = set(b)
+a = open('dict.txt')
+l = a.read().lower().splitlines()
+dict = set(l)
+a.close()
 
 #get list of subreddits
-subredditList = open('uscolleges.txt').read().splitlines()
+subredditFile = open('uscolleges.txt')
+subredditList = subredditFile.read().splitlines()
 subredditsSet = set(subredditList)
+subredditFile.close()
 
 #for reddit API
 r = praw.Reddit('College Subreddit Text Analysis by u/DraftiestHat')
@@ -36,12 +54,16 @@ for subreddit in subredditsSet:
 	for submission in submissions:
 		if(len(submission.comments) > 0):
 			#reads each comment
-			for s in submission.comments:
+			flat_comments = praw.helpers.flatten_tree(submission.comments)
+			
+			for x in flat_comments:
+				s = x.body
 				#remove punctuation and put lower case
-				comment = s.translate(string.maketrans("",""),exclude).lower()
+				comment = s.translate(str.maketrans("","",string.punctuation)).lower()
 				#split into words
 				splitList = sorted(shlex.split(comment))
 				splitSet = set(splitList)
+				
 				#remove all words that are in top 500 words or not in a dictionary
 				for w in common:
 					if w.lower() in splitSet:
@@ -51,17 +73,21 @@ for subreddit in subredditsSet:
 				for w in splitSet:
 					if w not in dict:
 						toremove.append(w)
-				
+					
 				for w in toremove:
 					splitSet.remove(w)
+
+				words.update(splitSet)
 				
-				words.add(sorted(splitSet))
-				
-	subswords[subreddit] = words
+	#subswords[subreddit] = words
+	out.write(subreddit + ': ' + repr(sorted(words)) + '\n')
 	
-today = date.today()
-fileName = '' + today.year + today.month + today.day + 'subToWordDict.txt'
-json.dump(subswords, open(fileName,'w'))		
+#today = date.today()
+#fileName = '' + str(today.year) + str(today.month) + str(today.day) + 'subToWordDict.txt'
+#out = open(fileName,'w')
+out.close()
+
+
 
 	
 	
