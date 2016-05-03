@@ -89,6 +89,7 @@ for subreddit in subredditsSet:
 		print(subreddit + ': Invalid Subreddit')
 	except AttributeError as e:
 		print(subreddit + ': More Comments Error')
+
 #today = date.today()
 #fileName = '' + str(today.year) + str(today.month) + str(today.day) + 'subToWordDict.txt'
 #out = open(fileName,'w')
